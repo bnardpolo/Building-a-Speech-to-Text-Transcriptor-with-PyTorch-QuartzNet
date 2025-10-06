@@ -1,306 +1,167 @@
-Building a Speech-to-Text Transcriptor with PyTorch & QuartzNet
+TITLE
+Building a Speech to Text Transcriptor with PyTorch QuartzNet
 
+INTRODUCTION
+This project turns speech into text and can optionally translate the text. It offers two engines. A local PyTorch QuartzNet path when you want control and tunability, and an API path using Whisper for convenience. The app accepts audio and video uploads or a YouTube link, converts media to a standard wav format with ffmpeg, runs transcription, and can compute quality metrics when you provide a reference transcript. It also supports extracting text from documents and translating longer texts in chunks so the workflow stays practical for real tasks. 
 
-A Streamlit application that converts speech to text from YouTube links, uploaded audio/video, and documents/pasted text, with optional translation and quality metrics. It supports two ASR engines:
+app
 
-Local QuartzNet (PyTorch) — fast, private, offline with your checkpoint
+ 
 
-OpenAI Whisper API — robust cloud transcription for hard/noisy audio
+streamlit_app
 
-Every run is saved to disk with runtime, engine used, and metrics (WER/CER, plus BLEU when translating).
+WHY PYTORCH AND QUARTZNET
+I chose PyTorch with QuartzNet to retain control over the model and features. With PyTorch I can manage audio preprocessing, spectrogram parameters, decoding, and domain adaptation for accents or noise profiles. The QuartzNet flow uses an explicit AudioProcessor for mel spectrograms, CTC friendly text normalization, and greedy decoding, which makes the system transparent and adjustable when accuracy matters or when running in constrained or private environments. 
 
-Table of Contents
+my_utils
 
-What I Built & Why
+TOOL KEY FEATURES
+Local QuartzNet or Whisper selection. Switch engines in the UI. 
 
-Why PyTorch
+app
 
-System Design
+ 
 
-Features
+streamlit_app
 
-Folder Layout
 
-Requirements
+YouTube ingestion and general audio or video uploads with automatic conversion to mono 16 kHz wav using ffmpeg. 
 
-Setup
+app
 
-Environment Variables (.env)
+ 
 
-Run the App
+streamlit_app
 
-Using the App
 
-Results & Logging
+Optional accuracy checks. Compute WER and CER by pasting ground truth. One variant also calculates BLEU when a reference is provided. Results are saved to JSON for later analysis. 
 
-Music / Noisy Audio (Tips)
+app
 
-Troubleshooting
+ 
 
-How It Works (Internals)
+streamlit_app
 
-Future Work
 
-License
+Text utilities. Extract text from txt, md, csv, docx, or pdf. Translate long texts in chunks with a translator prompt that preserves meaning and structure. 
 
-What I Built & Why
+app
 
-A practical, Windows-friendly ASR tool that handles real-world inputs (YouTube/audio/video/docs/paste).
+ 
 
-A local-first path using PyTorch and a QuartzNet-style model, with a cloud fallback (OpenAI Whisper) for tough cases.
+streamlit_app
 
-Built-in quality measurement (WER/CER/BLEU) and result logging for reproducibility.
 
-Why PyTorch
+Practical guards. File size checks for the Whisper path and clear messages when audio exceeds API limits. ffmpeg presence checks with a quick version display. 
 
-The heavy parts of speech recognition—convolutions over long spectrograms, log-Mel extraction, and CTC decoding—are power-hungry. I chose PyTorch to:
+app
 
-Run core logic on tensors (vectorized ops, torch.no_grad()), fast on CPU and accelerated on GPU when available.
+ 
 
-Load and run my QuartzNet-style model from a .pt checkpoint with full control over the CTC vocabulary (blank=0; space, apostrophe, a–z).
+streamlit_app
 
-Prefer torchaudio transforms and automatically fall back to librosa+soundfile when torchaudio wheels are tricky on Windows—so the app still runs anywhere.
+TECHNOLOGIES USED
+PyTorch for model execution and custom audio feature handling. 
 
-System Design
+my_utils
 
-Inputs
 
-YouTube URL → yt-dlp → bestaudio → WAV
+QuartzNet architecture for CTC based speech recognition via local checkpoints or NeMo restoration when using a .nemo file. 
 
-Uploaded audio/video → FFmpeg → mono 16k WAV
+streamlit_app
 
-Documents (TXT/DOCX/PDF/MD/CSV) → text extraction
 
-Pasted text → directly processed (no ASR)
+Streamlit for a simple end to end UI that orchestrates inputs, transcription, metrics, and translation. 
 
-ASR Engines
+app
 
-Local QuartzNet (PyTorch)
 
-Log-Mel features (64 mels), mean/var norm
+ffmpeg and ffprobe for robust media handling. 
 
-Greedy CTC decoding (collapse repeats, drop blank=0)
+app
 
-OpenAI Whisper API
 
-File-size guard (~25 MB) with clear error message
+Optional OpenAI Whisper API as an alternate engine and translation for multi language support. 
 
-Translation
+app
 
-Chunked translation with OpenAI Chat models (default gpt-4o-mini)
+ 
 
-Preserves formatting and paragraph breaks
+streamlit_app
 
-Refusal-resistant prompt + tiny guard for edge cases (e.g., “you” → “tú” not “sí”)
+PROJECT WORKFLOW
+Prepare media. The app checks ffmpeg and ffprobe, then converts uploads or a YouTube clip into a standard 16 kHz wav. 
 
-Metrics & Logging
+app
 
-WER/CER via jiwer (when reference text provided)
+ 
 
-BLEU via nltk (when translating + reference provided)
+streamlit_app
 
-Per-run JSON saved to results/ (runtime, engine used, source, metrics, transcript/translation)
 
-Features
+Choose engine. Use local QuartzNet with a checkpoint path when you need control, or select Whisper for a hosted option with a size guard. 
 
-ASR: Local QuartzNet (PyTorch) or OpenAI Whisper (toggle in UI)
+app
 
-Inputs: YouTube, audio/video uploads, documents, pasted text
+ 
 
-Optional translation to multiple languages
+streamlit_app
 
-Quality metrics: WER/CER (+ BLEU when translating)
 
-One-click “Music mode (vocal enhance)” (optional) to pre-clean noisy/music clips
+Transcribe. For QuartzNet, the AudioProcessor generates log mel spectrograms and handles decoding. For Whisper, the app streams the wav to the API. 
 
-Windows-friendly: single environment; FFmpeg auto-detection with .env override
+my_utils
 
-Folder Layout
-project/
-├─ streamlit_app.py                 # Streamlit entry point (UI + pipeline + logging)
-├─ my_utils.py                      # AudioProcessor, log-Mel, greedy CTC, text mapping
-├─ test.py                          # QuartzNetTester + WER/CER JSON & summary CSV
-├─ checkpoints/                     # Your QuartzNet checkpoint(s)
-├─ tools_bin/                       # Optional: ffmpeg.exe, ffprobe.exe
-├─ outputs/
-│  ├─ audio/                        # Converted audio
-│  ├─ docs/                         # Extracted document text
-│  └─ translations/<title>/         # source.txt, translated_<lang>.txt
-├─ results/                         # Per-run JSON logs (runtime + engine + metrics)
-├─ requirements.txt
-└─ .env
+ 
 
-Requirements
+app
 
-Python 3.9+
 
-FFmpeg + FFprobe available on PATH (or referenced in .env)
+Evaluate. Optionally paste a reference to compute WER and CER. One variant also writes BLEU and runtime details to the results JSON. 
 
-One virtual environment (recommended)
+streamlit_app
 
-The app uses torchaudio if available, otherwise librosa+soundfile automatically.
 
-Setup
-Windows (PowerShell)
-# 1) Open PowerShell in your project folder
-cd "C:\Users\<you>\Desktop\captone final"
+Translate. If enabled, long texts are split into chunks with a translator prompt that preserves names, numbers, tone, and layout. Outputs are saved and can be downloaded. 
 
-# 2) Create & activate a virtual environment
-python -m venv speechenv
-.\speechenv\Scripts\Activate.ps1
+app
 
-# 3) Upgrade pip (optional)
-python -m pip install --upgrade pip
+ 
 
-# 4) Install dependencies
-pip install -r requirements.txt
+streamlit_app
 
-macOS / Linux
-cd /path/to/project
-python3 -m venv speechenv
-source ./speechenv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+KEY FINDINGS AND BUSINESS IMPLICATIONS
+Two paths cover different needs. A lightweight API route is quick to integrate, while the PyTorch route gives you control, repeatability, and the option to fine tune for domain audio. This mirrors the tradeoffs described in the accompanying write up comparing a RAG and LangChain style orchestration to a heavier QuartzNet flow. The right choice depends on cost, data privacy, and the need for customization. 
 
-Environment Variables (.env)
+Bernard Griffin final report
 
-Create a .env file in the project root:
 
-# If ffmpeg/ffprobe are not on PATH, point to your local copies (Windows example):
-FFMPEG_BIN="C:\Users\<you>\Desktop\captone final\tools_bin\ffmpeg.exe"
-FFPROBE_BIN="C:\Users\<you>\Desktop\captone final\tools_bin\ffprobe.exe"
+Measurable quality. The app persists WER and CER results so teams can track improvements over time and attach evidence during model changes or data cleaning. Sample JSON result files are included to show how outputs are stored for review. 
 
-# Local QuartzNet checkpoint (update to your file)
-QUARTZNET_CHECKPOINT=checkpoints\quartznet_best.pt
+wer_results_20250910_094557
 
-# OpenAI (for Whisper + translation)
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
-# Optional: override translation model
-OPENAI_TRANSLATE_MODEL=gpt-4o-mini
+ 
 
-Run the App
-# Windows
-.\speechenv\Scripts\Activate.ps1
-streamlit run streamlit_app.py
+wer_results_20250910_094612
 
-# macOS/Linux
-source ./speechenv/bin/activate
-streamlit run streamlit_app.py
 
+Operational practicality. The system handles real inputs such as YouTube and large documents and provides clear error messages for oversize audio in the API path. This lowers friction for analysts and non engineers using the tool day to day. 
 
-Open the local URL shown in the terminal (e.g., http://localhost:8511).
+app
 
-Using the App
+ 
 
-Choose an Engine
+streamlit_app
 
-Local QuartzNet → enter/confirm checkpoint path
+CONCLUSION
+This project balances convenience and control. When speed matters, the Whisper path works out of the box with sensible size checks. When you need transparency, tunability, or to operate in restricted environments, PyTorch with QuartzNet lets you own preprocessing, decoding, and adaptation strategies. The UI and saved metrics make it easy to compare runs, share results, and move toward a production setup. 
 
-OpenAI Whisper → ensure OPENAI_API_KEY is set
+app
 
-Provide Input
+ 
 
-YouTube URL, upload audio/video, upload document, or paste text
+my_utils
 
-(Optional) Reference Text
+ 
 
-Paste ground truth to compute WER/CER (and BLEU if translating)
-
-(Optional) Translate
-
-Check “Translate the text”, pick a target language
-
-Click Run Pipeline.
-Results and logs are written automatically (see below).
-
-Results & Logging
-
-Per run JSON in results/run_YYYYMMDD_HHMMSS.json:
-
-timestamp, runtime_seconds, model_used (Whisper / Local QuartzNet / NeMo QuartzNet / N/A)
-
-source (youtube_url / uploaded_file / document / pasted_text)
-
-audio_path (if any), transcript, translation, reference_text
-
-metrics = {WER, CER, WER_norm, CER_norm, BLEU} (metrics present only if a reference is provided)
-
-Translations in outputs/translations/<title>/:
-
-source.txt
-
-translated_<language>.txt
-
-Testing script outputs (test.py):
-
-Per-item WER JSON in outputs/eval/
-
-Summary CSV with metrics
-
-Music / Noisy Audio (Tips)
-
-ASR struggles with songs (vocals under instruments/reverb). Three options:
-
-1) In-app “Music mode (vocal enhance)” (optional)
-
-Pre-cleans audio (HPF/LPF + denoise + normalize) before ASR. Toggle in the UI.
-
-2) Quick FFmpeg cleanup (manual)
-ffmpeg -y -i "song.mp3" `
-  -af "highpass=f=120,lowpass=f=4000,afftdn=nf=-20,dynaudnorm" `
-  -ac 1 -ar 16000 "clean_song.wav"
-
-3) Separate vocals first (best quality) with Demucs
-pip install -U demucs
-demucs -n htdemucs -o ".\outputs\demucs" "song.mp3"
-ffmpeg -y -i ".\outputs\demucs\htdemucs\song\vocals.wav" `
-  -af "highpass=f=120,lowpass=f=4500,afftdn=nf=-15,dynaudnorm" `
-  -ac 1 -ar 16000 ".\outputs\demucs\htdemucs\song\vocals_clean16k.wav"
-
-
-Use the cleaned/isolated vocals WAV in the app.
-
-Troubleshooting
-
-FFmpeg not found / failed
-Add FFMPEG_BIN / FFPROBE_BIN in .env or install to PATH. Use the UI’s Check ffmpeg -version to verify.
-
-Whisper “audio too large”
-The app checks the ~25 MB API cap and shows a friendly error. Trim the clip or downsample with FFmpeg.
-
-QuartzNet checkpoint mismatch
-Ensure your model uses the 29-symbol CTC vocab (blank=0; space, apostrophe, a–z) and compatible feature settings (16 kHz, 64 mels).
-
-torchaudio install issues (Windows)
-The app automatically falls back to librosa+soundfile. No action needed.
-
-Dropped PDFs into media uploader
-The app restricts types and auto-routes docs to text extraction, but if you see FFmpeg parse errors, use the Document uploader.
-
-How It Works (Internals)
-
-Feature extraction: 16 kHz mono → log-Mel (64 mels, Slaney/HTK) → per-feature mean/var norm
-
-ASR model: QuartzNet-style conv net (CTC).
-
-Decoding: Greedy CTC (collapse repeats, drop blank).
-
-Evaluation: jiwer (WER/CER) and nltk BLEU.
-
-I/O: FFmpeg converts anything to WAV; yt-dlp fetches bestaudio for YouTube.
-
-Logging: structured JSON per run, CSV summaries from test.py.
-
-Future Work
-
-VAD segmentation + batch decoding for long videos
-
-Beam search CTC with LM fusion
-
-CUDA wheels & Demucs GPU path for faster music handling
-
-More translation controls (formal/informal switch, glossary)
-
-License
-
-Personal/educational use. Adapt as needed for course/capstone submission.
+streamlit_app
