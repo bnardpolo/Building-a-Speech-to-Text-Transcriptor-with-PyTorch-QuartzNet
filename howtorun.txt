@@ -1,0 +1,67 @@
+Open PowerShell in the project folder
+cd "C:\Users<you>\Desktop\captone final"
+
+Create and activate a virtual environment
+python -m venv speechenv
+.\speechenv\Scripts\Activate.ps1
+
+Upgrade pip (optional but recommended)
+python -m pip install --upgrade pip
+
+Install dependencies
+pip install -r requirements.txt
+
+Create a .env file in the project root (edit paths for your machine)
+FFMPEG_BIN="C:\Users<you>\Desktop\captone final\tools_bin\ffmpeg.exe"
+FFPROBE_BIN="C:\Users<you>\Desktop\captone final\tools_bin\ffprobe.exe"
+QUARTZNET_CHECKPOINT=checkpoints\quartznet_best.pt
+OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
+OPENAI_TRANSLATE_MODEL=gpt-4o-mini
+
+Launch the app
+streamlit run streamlit_app.py
+
+In the browser UI
+• Choose engine: Local QuartzNet (needs your checkpoint) or OpenAI Whisper
+• Provide input: YouTube URL, upload audio/video, upload a document (TXT/DOCX/PDF/MD/CSV), or paste text
+• (Optional) Paste reference text to compute WER/CER (and BLEU if you translate)
+• (Optional) Check “Translate the text” and pick a target language
+• Click “Run Pipeline”
+• Outputs: transcripts/translations saved under outputs/, and a JSON log with runtime + metrics in results/
+
+— HOW TO RUN (macOS / Linux, bash) —
+
+cd /path/to/project
+python3 -m venv speechenv
+source ./speechenv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+Create .env in the project root (adjust paths for your OS):
+FFMPEG_BIN=ffmpeg
+FFPROBE_BIN=ffprobe
+QUARTZNET_CHECKPOINT=checkpoints/quartznet_best.pt
+OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
+OPENAI_TRANSLATE_MODEL=gpt-4o-mini
+
+Run:
+streamlit run streamlit_app.py
+
+— Optional: Better results on music / noisy clips —
+
+A) Quick cleanup with FFmpeg (makes many songs more readable)
+ffmpeg -y -i "path\to\song.mp3" -af "highpass=f=120,lowpass=f=4000,afftdn=nf=-20,dynaudnorm" -ac 1 -ar 16000 "clean_song.wav"
+Upload clean_song.wav in the app.
+
+B) Stronger approach with Demucs (separate vocals, then clean)
+pip install -U demucs
+demucs -n htdemucs -o ".\outputs\demucs" "path\to\song.mp3"
+"C:\Users<you>\Desktop\captone final\tools_bin\ffmpeg.exe" -y -i ".\outputs\demucs\htdemucs\song\vocals.wav" -af "highpass=f=120,lowpass=f=4500,afftdn=nf=-25,dynaudnorm" -ac 1 -ar 16000 ".\outputs\demucs\htdemucs\song\vocals_clean16k.wav"
+Upload vocals_clean16k.wav in the app.
+
+— Troubleshooting quick hits —
+
+• “ffmpeg not found”: set FFMPEG_BIN/FFPROBE_BIN in .env or add ffmpeg to PATH.
+• Whisper “audio too large”: clip or downsample your audio (the API caps around ~25 MB).
+• QuartzNet issues: verify your checkpoint path and that it matches the 16 kHz / 64-mel setup.
+• torchaudio install pains on Windows: the app auto-falls back to librosa + soundfile. No change needed.

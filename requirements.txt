@@ -1,0 +1,78 @@
+######################## Build & Core pins (needed on Windows) ########################
+setuptools>=65.5.1
+wheel
+# NeMo deps need numpy < 1.24 on Py39
+numpy>=1.22,<1.24
+# Needed to build youtokentome on Windows
+Cython==0.29.36
+youtokentome==1.0.6
+
+######################## Core / App ########################
+python-dotenv
+streamlit
+pandas
+pydub
+imageio-ffmpeg>=0.4.9
+xlsxwriter
+
+######################## PyTorch (CPU) ########################
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.1.2+cpu
+torchaudio==2.1.2+cpu
+
+######################## Audio / STT ########################
+openai-whisper
+safetensors>=0.4.5
+accelerate>=0.30
+
+######################## NeMo ASR stack (for .nemo QuartzNet) ########################
+# Pins that play nicely with NeMo 1.21 on Windows/Py39
+hydra-core==1.3.2
+transformers==4.33.3
+tokenizers==0.13.3
+huggingface_hub==0.17.3
+webdataset==0.1.62
+onnx>=1.7.0
+tqdm
+wrapt
+ruamel.yaml
+nemo_toolkit[asr]==1.21.0
+
+######################## NLP / Summarization ########################
+nltk
+sentencepiece
+scikit-learn
+spacy==3.7.4          # after install: python -m spacy download en_core_web_sm
+
+######################## RAG / Vector (optional) ########################
+
+# Pin to keep compatibility with transformers 4.33.x
+sentence-transformers==2.2.2
+faiss-cpu
+chromadb
+tiktoken
+rank-bm25
+cohere
+
+######################## YouTube & transcripts ########################
+yt-dlp
+pytube
+youtube-transcript-api
+
+######################## Metrics (optional) ########################
+rouge-score
+bert-score
+
+######################## Docs I/O ########################
+pypdf
+python-docx
+reportlab
+langdetect
+
+######################## OpenAI client (optional “polish” step) ########################
+openai>=1.40.0
+torchvision==0.16.2+cpu
+jiwer
+librosa
+matplotlib
+tensorboard

@@ -1,0 +1,48 @@
+Introduction
+
+This project delivers a Windows-friendly speech recognition and translation app that accepts YouTube links, uploaded audio/video, documents, and pasted text. It provides two ASR paths: a local PyTorch QuartzNet-style model for fast, private inference and a cloud fallback (OpenAI Whisper) for difficult recordings. The application emphasizes reproducibility (deterministic audio conversion to mono 16 kHz), transparent configuration, and logged metrics.
+
+Why PyTorch and What I Built
+
+PyTorch for core DSP + inference. Audio is converted to log-Mel spectrograms (64 bins, Slaney/HTK) with mean/variance normalization and fed to a QuartzNet-style 1D conv CTC model.
+
+Greedy CTC decoding. I implemented a blank=0; space, apostrophe, a–z vocabulary with repeat-collapse decoding for speed and simplicity.
+
+Performance and portability. Inference uses torch.no_grad() with vectorized ops and runs well on CPU, while remaining GPU-ready. If torchaudio is unavailable on Windows, the pipeline automatically falls back to librosa + soundfile with identical behavior.
+
+Deterministic I/O. All inputs are normalized to mono 16 kHz PCM WAV via FFmpeg to ensure consistent results across formats.
+
+Steps to Improve Recognition on Music/Noisy Audio
+
+Standardize the audio front-end.
+Always convert inputs to mono 16 kHz, removing format variability and stabilizing features for both QuartzNet and Whisper.
+
+Speech-focused prefilter (“music mode”).
+Apply a targeted FFmpeg chain before ASR: high-pass (≈120 Hz) to remove rumble, low-pass (≈4–4.5 kHz) to temper cymbals/brightness, frequency-domain denoise (afftdn, nf≈−25…−30), then dynamic normalization (dynaudnorm) and a light limiter.
+Result: clearer speech energy and more stable decoding without retraining.
+
+Optional vocal separation with Demucs (best quality).
+Use htdemucs to isolate vocals.wav, then run the same cleanup and resample to 16 kHz mono.
+Result: consistent intelligibility gains when vocals are buried under music.
+
+Fallback to Whisper when needed.
+For very dense mixes or crowd noise, switch to OpenAI Whisper from the UI. A file-size guard (~25 MB) catches oversized inputs and provides a downsampling tip.
+
+Measure and document improvements.
+When ground truth is available, compute WER/CER (jiwer) and BLEU (nltk) and log runtime and engine. This makes pre-cleaning and engine choice quantitatively comparable.
+
+What the User Gets
+
+Single Streamlit interface for YouTube/audio/video/docs/paste
+
+Engine choice: Local QuartzNet (PyTorch) or OpenAI Whisper
+
+Optional translation to multiple languages
+
+Reproducible artifacts: transcripts/translations on disk; per-run JSON logs with WER/CER/BLEU and runtime
+
+A clear, documented music/noise mitigation path—from light filtering to Demucs-based vocal isolation
+
+Summary
+
+This application demonstrates a local-first, PyTorch-powered ASR pipeline that is fast, transparent, and reproducible, paired with a pragmatic music/noise strategy. When recordings exceed what a compact local model can handle, it cleanly falls back to Whisper. Combining PyTorch control with cloud robustness allows accurate everyday speech handling while remaining usable on hard, real-world audio.
