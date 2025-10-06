@@ -4,21 +4,14 @@ Building a Speech to Text Transcriptor with PyTorch QuartzNet
 INTRODUCTION
 This project turns speech into text and can optionally translate the text. It offers two engines. A local PyTorch QuartzNet path when you want control and tunability, and an API path using Whisper for convenience. The app accepts audio and video uploads or a YouTube link, converts media to a standard wav format with ffmpeg, runs transcription, and can compute quality metrics when you provide a reference transcript. It also supports extracting text from documents and translating longer texts in chunks so the workflow stays practical for real tasks. 
 
-app
-
- 
-
-streamlit_app
 
 WHY PYTORCH AND QUARTZNET
 I chose PyTorch with QuartzNet to retain control over the model and features. With PyTorch I can manage audio preprocessing, spectrogram parameters, decoding, and domain adaptation for accents or noise profiles. The QuartzNet flow uses an explicit AudioProcessor for mel spectrograms, CTC friendly text normalization, and greedy decoding, which makes the system transparent and adjustable when accuracy matters or when running in constrained or private environments. 
 
-my_utils
-
 TOOL KEY FEATURES
 Local QuartzNet or Whisper selection. Switch engines in the UI. 
 
-app
+
 
  
 
@@ -27,58 +20,36 @@ streamlit_app
 
 YouTube ingestion and general audio or video uploads with automatic conversion to mono 16 kHz wav using ffmpeg. 
 
-app
-
- 
-
-streamlit_app
 
 
 Optional accuracy checks. Compute WER and CER by pasting ground truth. One variant also calculates BLEU when a reference is provided. Results are saved to JSON for later analysis. 
 
-app
-
- 
-
-streamlit_app
 
 
 Text utilities. Extract text from txt, md, csv, docx, or pdf. Translate long texts in chunks with a translator prompt that preserves meaning and structure. 
 
-app
 
- 
-
-streamlit_app
 
 
 Practical guards. File size checks for the Whisper path and clear messages when audio exceeds API limits. ffmpeg presence checks with a quick version display. 
 
-app
 
- 
-
-streamlit_app
 
 TECHNOLOGIES USED
 PyTorch for model execution and custom audio feature handling. 
 
-my_utils
 
 
 QuartzNet architecture for CTC based speech recognition via local checkpoints or NeMo restoration when using a .nemo file. 
 
-streamlit_app
 
 
 Streamlit for a simple end to end UI that orchestrates inputs, transcription, metrics, and translation. 
 
-app
+
 
 
 ffmpeg and ffprobe for robust media handling. 
-
-app
 
 
 Optional OpenAI Whisper API as an alternate engine and translation for multi language support. 
@@ -87,25 +58,15 @@ app
 
  
 
-streamlit_app
 
 PROJECT WORKFLOW
 Prepare media. The app checks ffmpeg and ffprobe, then converts uploads or a YouTube clip into a standard 16 kHz wav. 
 
-app
 
- 
-
-streamlit_app
 
 
 Choose engine. Use local QuartzNet with a checkpoint path when you need control, or select Whisper for a hosted option with a size guard. 
 
-app
-
- 
-
-streamlit_app
 
 
 Transcribe. For QuartzNet, the AudioProcessor generates log mel spectrograms and handles decoding. For Whisper, the app streams the wav to the API. 
@@ -128,7 +89,6 @@ app
 
  
 
-streamlit_app
 
 KEY FINDINGS AND BUSINESS IMPLICATIONS
 Two paths cover different needs. A lightweight API route is quick to integrate, while the PyTorch route gives you control, repeatability, and the option to fine tune for domain audio. This mirrors the tradeoffs described in the accompanying write up comparing a RAG and LangChain style orchestration to a heavier QuartzNet flow. The right choice depends on cost, data privacy, and the need for customization. 
